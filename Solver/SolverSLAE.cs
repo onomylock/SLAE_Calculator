@@ -54,54 +54,52 @@ namespace SLAE_Calculator.Solver
             }
         }
 
-        public (int, List<int>) Solve()
+        public (int, List<List<int>>) Solve()
         {
-            int K = 0, i = 0;
-            List<int> res = new List<int>();            
+            int K = 0;
+            List<List<int>> res = new List<List<int>>();            
 
             for(int k = 0; k < M; k++)
             {
-                CountNoZeroElements.Add(B[k].Where(x => x != 0).Count());
-                if (B[k].Last() != 0)
-                    CountNoZeroElements[k]--;
+                CountNoZeroElements.Add(B[k].GetRange(0, B[k].Count() - 1).Where(x => x != 0).Count());                
             }
+            
 
-            Iteration(0);
-
-
-            return (K, res);
-        }
-
-        private void Iteration(int lineIndex)
-        {
-            int minIndex = B[lineIndex].GetMinIndex();
-            int valIndex = B[lineIndex].GetFirstNoZeroElementIndex(minIndex);
-
-            if (valIndex != -1)
+            for(int i = 0; i < M; i++)
             {
-                int r = B[lineIndex][valIndex] % B[lineIndex][minIndex];
-                int q = (B[lineIndex][valIndex] - r) / B[lineIndex][minIndex];
-
-                for (int j = 0; j < B.Count; j++)
+                while (CountNoZeroElements[i] > i + 1)
                 {
-                    if (B[j][valIndex] == 0 && q * B[j][minIndex] != 0 && j < M)
-                        CountNoZeroElements[j]++;
-                    B[j][valIndex] -= q * B[j][minIndex];
+                    var minIndex = B[i].GetRange(0, B[i].Count() - 1).GetMinIndex(i);
+                    var valIndex = B[i].GetRange(0, B[i].Count() - 1).GetLastNoZeroElementIndex(minIndex);
+                    OperationSub(i, valIndex, minIndex);
                 }
 
-                //if (r == 0 && (minIndex > valIndex || CountNoZeroElements[lineIndex] > minIndex))
-                //{
-                //    CountNoZeroElements[lineIndex]--;
-
-                //    for (int j = 0; j < B.Count; j++)
-                //    {
-                //        B[lineIndex].Swap(valIndex, minIndex);
-                //    }
-                //}
-
-                LineSwapper();
-                ColumnSwapper();
+                ColumnSwapper(i);                                     
             }
+
+
+
+            for (int i = 0; i < M; i++)
+            {
+                var minIndex = B[i].GetRange(0, B[i].Count() - 1).GetMinIndex(0);
+                OperationSub(i, B[i].Count() - 1, minIndex);
+                if (B[i].Last() != 0)
+                    throw new Exception("NO SOLUTION");
+            }
+
+            K = N - CountNoZeroElements.Max() - 1;          
+
+            for(int i = 0; i < N; i++)
+            {
+                res.Add(new List<int>());
+                for(int j = 0; j <= K; j++)
+                {
+                    res[i].Add(B[M + i][N + j - 1]);
+                }
+                
+            }
+
+            return (K, res);
         }
 
         private void LineSwapper()
@@ -119,25 +117,41 @@ namespace SLAE_Calculator.Solver
             }
         }
 
-        private void ColumnSwapper()
+        private void OperationSub(int lineIndex, int valIndex, int minIndex)
         {
-            for(int i = M - 1; i <= 0; i++)
+            if (valIndex != -1 && minIndex != -1)
             {
-                int lastIndex = B[i].GetRange(0, N).LastIndexOfNonZeroElement();
-                if(lastIndex > CountNoZeroElements[i] - 1)
-                {
-                    
-                    if(B.Where(x => B.IndexOf(x) < M && B.IndexOf(x) != i)
-                        .Select(y => y[lastIndex]).Where(z => z != 0).Count() == 0)
-                    {
-                        int firstZeroIndex = B[i].IndexOf(B[i].First(x => x == 0));
-                        for(int j = 0; j < B.Count(); j++)
-                        {
-                            B[j].Swap(lastIndex, firstZeroIndex);
-                        }
-                    }
-                }
+                int r = B[lineIndex][valIndex] % B[lineIndex][minIndex];
+                int q = (B[lineIndex][valIndex] - r) / B[lineIndex][minIndex];
 
+                for (int j = 0; j < B.Count; j++)
+                {
+                    if (B[j][valIndex] == 0 && q * B[j][minIndex] != 0 && j < M)
+                        CountNoZeroElements[j]++;
+                    else if(B[j][valIndex] != 0 && B[j][valIndex] - q * B[j][minIndex] == 0)
+                        CountNoZeroElements[j]--;
+                    B[j][valIndex] -= q * B[j][minIndex];
+                }
+            }
+        }
+
+        private void ColumnSwapper(int index)
+        {           
+            var flags = B[index].GetRange(0, N).GetMaskElements();
+
+            for (int i = 0; i < flags.Count(); i++)
+            {
+                var range = flags.GetRange(0, i);
+
+                if (flags[i] && range.Contains(false) && i != index)
+                {
+                    var swapIndex = flags.IndexOf(range.First(x => x == false));
+                    flags.Swap(i, swapIndex);
+                    for(int j = 0; j < B.Count(); j++)
+                    {
+                        B[j].Swap(i, swapIndex);
+                    }
+                }                
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using SLAE_Calculator.Solver;
+using System.Collections.Generic;
 using System.Data;
 
 namespace SLAE_Calculator
@@ -10,11 +11,19 @@ namespace SLAE_Calculator
             
 
             var solver = new SolverSLAE();
-            solver.ReadInput();
-            solver.GenrateMatrixB();
-            solver.Solve();
-
-
+            try
+            {
+                solver.ReadInput();
+                solver.GenrateMatrixB();
+                var result = solver.Solve();
+                Console.WriteLine(result.Item1);
+                result.Item2.ForEach(i => { i.ForEach(x => Console.Write("{0}\t", x)); Console.WriteLine(); });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message.ToString());                
+            }
+            
         }
     }
 }
