@@ -14,14 +14,14 @@ namespace SLAE_Calculator.Solver
 
         public void ReadInput()
         {
-            FileInfo sourceFile = new FileInfo(@"../../../input.txt");
-            TextReader sourceFileReader = new StreamReader(sourceFile.FullName);
-            Console.SetIn(sourceFileReader);
+            //FileInfo sourceFile = new FileInfo(@"../../../Tests/input2.txt");
+            //TextReader sourceFileReader = new StreamReader(sourceFile.FullName);
+            //Console.SetIn(sourceFileReader);
 
             Console.WriteLine("Set N, M");
             var parameters = Array.ConvertAll(Console.ReadLine().Trim().Split(' '), Convert.ToInt32);
-            N = parameters[0];
-            M = parameters[1];
+            M = parameters[0];
+            N = parameters[1];
 
             Console.WriteLine("set elements");
             for (int i = 0; i < M; i++)
@@ -69,8 +69,10 @@ namespace SLAE_Calculator.Solver
             {
                 while (CountNoZeroElements[i] > i + 1)
                 {
-                    var minIndex = B[i].GetRange(0, B[i].Count() - 1).GetMinIndex(i);
+                    var minIndex = B[i].GetMinIndex(i);
                     var valIndex = B[i].GetRange(0, B[i].Count() - 1).GetLastNoZeroElementIndex(minIndex);
+                    if(minIndex < 0 )
+                        throw new Exception("NO SOLUTION");
                     OperationSub(i, valIndex, minIndex);
                 }
 
@@ -85,18 +87,24 @@ namespace SLAE_Calculator.Solver
                 OperationSub(i, B[i].Count() - 1, minIndex);
                 if (B[i].Last() != 0)
                     throw new Exception("NO SOLUTION");
+            }            
+
+            for(int i = 0; i < M; i++)
+            {
+                int ind = B[i].GetLastNoZeroElementIndex(B[i].Count());
+                if (ind > K)
+                    K = ind;
             }
 
-            K = N - CountNoZeroElements.Max() - 1;          
-
-            for(int i = 0; i < N; i++)
+            K = N - K - 1;            
+            for (int i = 0; i < N; i++)
             {
-                res.Add(new List<int>());
-                for(int j = 0; j <= K; j++)
+                res.Add(new List<int>());               
+                for(int  j = N - K; j < B[i].Count(); j++)
                 {
-                    res[i].Add(B[M + i][N + j - 1]);
+                    res[i].Add(B[M + i][j]);
                 }
-                
+
             }
 
             return (K, res);
@@ -128,7 +136,7 @@ namespace SLAE_Calculator.Solver
                 {
                     if (B[j][valIndex] == 0 && q * B[j][minIndex] != 0 && j < M)
                         CountNoZeroElements[j]++;
-                    else if(B[j][valIndex] != 0 && B[j][valIndex] - q * B[j][minIndex] == 0)
+                    else if(B[j][valIndex] != 0 && B[j][valIndex] - q * B[j][minIndex] == 0 && valIndex != B[j].Count() - 1)
                         CountNoZeroElements[j]--;
                     B[j][valIndex] -= q * B[j][minIndex];
                 }

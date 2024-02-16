@@ -7,12 +7,12 @@ namespace SLAE_Calculator
     public static class Pragma
     {
         public static void Main(String[] args)
-        {
-            
+        {            
 
             var solver = new SolverSLAE();
             try
             {
+
                 solver.ReadInput();
                 solver.GenrateMatrixB();
                 var result = solver.Solve();
